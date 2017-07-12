@@ -31,11 +31,11 @@ import uk.me.gman.trains.rest.ApiClient;
 import uk.me.gman.trains.rest.ApiInterface;
 
 
-public class CardViewActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
 
     private TrainsAdapter mAdapter;
     private ArrayList<DataObject> data;
-    private static String LOG_TAG = "CardViewActivity";
+    private static String LOG_TAG = "MainActivity";
     private Timer autoUpdate;
 
     @Override
