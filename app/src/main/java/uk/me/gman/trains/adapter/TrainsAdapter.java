@@ -58,7 +58,7 @@ public class TrainsAdapter extends RecyclerView.Adapter<TrainsAdapter.TrainsView
     public void onBindViewHolder(TrainsViewHolder holder, final int position) {
         holder.title.setText(trains.get(position).getTitle(context));
         if( trains.get(position).getEtd().equals("On time") ) {
-            holder.title.setBackgroundColor(Color.WHITE);
+            holder.title.setBackgroundColor(0xcfd8dc);
         } else {
             //holder.title.setBackgroundColor(Color.RED);
             highlightTextPart(holder.title, 1, " ,");
