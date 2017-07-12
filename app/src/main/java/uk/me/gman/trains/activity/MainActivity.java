@@ -40,14 +40,6 @@ public class MainActivity extends AppCompatActivity {
     private ApiInterface apiService;
 
     private String origin = "twy";
-    /*
-    private String[] destinations = {
-            "did",
-            "slo",
-            "rdg",
-            "pad",
-    };
-*/
     static final Map<String, String> destinations = ImmutableMap.of(
             "did", "Didcot",
             "slo", "Slough",
