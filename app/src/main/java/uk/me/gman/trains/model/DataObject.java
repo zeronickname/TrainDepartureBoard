@@ -10,18 +10,21 @@ import uk.me.gman.trains.R;
 
 public class DataObject {
     private LocationInfo trains;
+    private String destination;
 
-    public DataObject( List<TrainServices> trains ) {
+    public DataObject( String destination, List<TrainServices> trains ) {
         this.trains = new LocationInfo(trains);
+        this.destination = destination;
     }
 
     public LocationInfo getLocInfo() { return trains; }
+    public String getDestination() {return destination; }
 
     public String getEtd(){ return trains.getTrainServices().get(0).getEtd(); }
 
     public String getTitle( Context context ) {
         Resources res = context.getResources();
-        return res.getString(R.string.to, trains.getTrainServices().get(0).getDestination(), trains.getTrainServices().get(0).getEtd());
+        return res.getString(R.string.to, destination, trains.getTrainServices().get(0).getEtd());
     }
     public String getDescription( Context context ) {
         Resources res = context.getResources();
