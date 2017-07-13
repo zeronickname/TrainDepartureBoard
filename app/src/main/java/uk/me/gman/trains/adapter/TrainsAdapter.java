@@ -61,7 +61,7 @@ public class TrainsAdapter extends RecyclerView.Adapter<TrainsAdapter.TrainsView
             holder.title.setBackgroundColor(0xcfd8dc);
         } else {
             //holder.title.setBackgroundColor(Color.RED);
-            highlightTextPart(holder.title, 1, " ,");
+            highlightTextPart(holder.title, 1, " ");
         }
 
         holder.description.setText(trains.get(position).getDescription(context));

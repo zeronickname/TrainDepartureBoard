@@ -24,7 +24,11 @@ public class DataObject {
 
     public String getTitle( Context context ) {
         Resources res = context.getResources();
-        return res.getString(R.string.to, destination, trains.getTrainServices().get(0).getEtd());
+        String departureTime = trains.getTrainServices().get(0).getEtd();
+        if( departureTime.equals("On time") ) {
+            departureTime = trains.getTrainServices().get(0).getStd();
+        }
+        return res.getString(R.string.to, destination, departureTime);
     }
     public String getDescription( Context context ) {
         Resources res = context.getResources();
