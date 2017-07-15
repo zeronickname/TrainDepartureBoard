@@ -13,6 +13,7 @@ import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.List;
@@ -21,22 +22,28 @@ import uk.me.gman.trains.R;
 import uk.me.gman.trains.model.DataObject;
 
 
-public class TrainsAdapter extends RecyclerView.Adapter<TrainsAdapter.TrainsViewHolder> {
+public class TrainsAdapter
+        extends RecyclerView.Adapter<TrainsAdapter.TrainsViewHolder>
+        implements View.OnClickListener {
 
     private List<DataObject> trains;
     private int rowLayout;
     private Context context;
 
+    // Hold the position of the expanded item
+    private int expandedPosition = -1;
 
     public static class TrainsViewHolder extends RecyclerView.ViewHolder {
         TextView title;
         TextView description;
+        LinearLayout llExpandArea;
 
 
         public TrainsViewHolder(View v) {
             super(v);
             title = v.findViewById(R.id.textView);
             description = v.findViewById(R.id.textView2);
+            llExpandArea = v.findViewById(R.id.llExpandArea);
         }
     }
 
@@ -50,7 +57,14 @@ public class TrainsAdapter extends RecyclerView.Adapter<TrainsAdapter.TrainsView
     public TrainsAdapter.TrainsViewHolder onCreateViewHolder(ViewGroup parent,
                                                             int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(rowLayout, parent, false);
-        return new TrainsViewHolder(view);
+
+        TrainsViewHolder holder = new TrainsViewHolder(view);
+        // Sets the click adapter for the entire cell
+        // to the one in this class.
+        holder.itemView.setOnClickListener(TrainsAdapter.this);
+        holder.itemView.setTag(holder);
+
+        return holder;
     }
 
 
@@ -65,6 +79,30 @@ public class TrainsAdapter extends RecyclerView.Adapter<TrainsAdapter.TrainsView
         }
 
         holder.description.setText(trains.get(position).getDescription(context));
+
+        if (position == expandedPosition) {
+            holder.llExpandArea.setVisibility(View.VISIBLE);
+        } else {
+            holder.llExpandArea.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        TrainsViewHolder holder = (TrainsViewHolder) view.getTag();
+        //String theString = trains.get(holder.getPosition());
+
+        // Check for an expanded view, collapse if you find one
+        if (expandedPosition >= 0) {
+            int prev = expandedPosition;
+            expandedPosition = -1;
+            notifyItemChanged(prev);
+        }
+        else {
+            // Set the current position to "expanded"
+            expandedPosition = holder.getAdapterPosition();
+            notifyItemChanged(expandedPosition);
+        }
     }
 
     @Override
