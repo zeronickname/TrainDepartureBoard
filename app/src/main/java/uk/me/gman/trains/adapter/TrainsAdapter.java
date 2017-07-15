@@ -14,12 +14,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.util.List;
 
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.model.DataObject;
+import uk.me.gman.trains.model.LocationInfo;
+import uk.me.gman.trains.model.TrainServices;
 
 
 public class TrainsAdapter
@@ -36,7 +40,7 @@ public class TrainsAdapter
     public static class TrainsViewHolder extends RecyclerView.ViewHolder {
         TextView title;
         TextView description;
-        LinearLayout llExpandArea;
+        TableLayout llExpandArea;
 
 
         public TrainsViewHolder(View v) {
@@ -73,9 +77,10 @@ public class TrainsAdapter
         holder.title.setText(trains.get(position).getTitle(context));
         if( trains.get(position).getEtd().equals("On time") ) {
             holder.title.setBackgroundColor(0xcfd8dc);
+        } else if( trains.get(position).getEtd().equals("Cancelled") ) {
+            highlightTextPart(holder.title, Color.RED);
         } else {
-            //holder.title.setBackgroundColor(Color.RED);
-            highlightTextPart(holder.title, 1, " ");
+            highlightTextPart(holder.title, Color.YELLOW);
         }
 
         holder.description.setText(trains.get(position).getDescription(context));
@@ -85,12 +90,72 @@ public class TrainsAdapter
         } else {
             holder.llExpandArea.setVisibility(View.GONE);
         }
+
+        holder.llExpandArea.removeAllViews();
+        TableRow tr_head = new TableRow(context);
+        tr_head.setBackgroundColor(Color.GRAY);
+        tr_head.setLayoutParams(new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT,
+                TableLayout.LayoutParams.WRAP_CONTENT));
+
+        TextView destH = new TextView(context);
+        destH.setText("Destination");
+        destH.setTextColor(Color.WHITE);
+        destH.setPadding(5, 5, 5, 5);
+        tr_head.addView(destH);// add the column to the table row here
+
+        TextView stdH = new TextView(context);
+        stdH.setText("STD"); // set the text for the header
+        stdH.setTextColor(Color.WHITE); // set the color
+        stdH.setPadding(5, 5, 5, 5); // set the padding (if required)
+        tr_head.addView(stdH); // add the column to the table row here
+
+        TextView etdH = new TextView(context);
+        etdH.setText("ETD"); // set the text for the header
+        etdH.setTextColor(Color.WHITE); // set the color
+        etdH.setPadding(5, 5, 5, 5); // set the padding (if required)
+        tr_head.addView(etdH); // add the column to the table row here
+
+        holder.llExpandArea.addView(tr_head, new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT,
+                TableLayout.LayoutParams.WRAP_CONTENT));
+
+        int count =0;
+        for(TrainServices train : trains.get(position).getLocInfo().getTrainServices() ) {
+
+            TableRow tr = new TableRow(context);
+            //if(count%2!=0) tr.setBackgroundColor(Color.DKGRAY);
+            tr.setId(100+count);
+            tr.setLayoutParams(new TableLayout.LayoutParams(
+                    TableLayout.LayoutParams.MATCH_PARENT,
+                    TableLayout.LayoutParams.WRAP_CONTENT));
+
+
+            TextView dest = new TextView(context);
+            dest.setText(train.getDestination());
+            dest.setPadding(2, 0, 5, 0);
+            dest.setTextColor(Color.WHITE);
+            tr.addView(dest);
+            TextView std = new TextView(context);
+            std.setText(train.getStd());
+            std.setTextColor(Color.WHITE);
+            tr.addView(std);
+            TextView etd = new TextView(context);
+            etd.setText(train.getEtd());
+            etd.setTextColor(Color.WHITE);
+            tr.addView(etd);
+
+            // finally add this to the table row
+            holder.llExpandArea.addView(tr, new TableLayout.LayoutParams(
+                    TableLayout.LayoutParams.MATCH_PARENT,
+                    TableLayout.LayoutParams.WRAP_CONTENT));
+            count++;
+        }
     }
 
     @Override
     public void onClick(View view) {
         TrainsViewHolder holder = (TrainsViewHolder) view.getTag();
-        //String theString = trains.get(holder.getPosition());
 
         // Check for an expanded view, collapse if you find one
         if (expandedPosition >= 0) {
@@ -110,25 +175,24 @@ public class TrainsAdapter
         return trains.size();
     }
 
-    private void highlightTextPart(TextView textView, int index, String regularExpression) {
+    private void highlightTextPart(TextView textView, int highlightColor) {
+        int index = 1;
         String fullText = textView.getText().toString();
         int startPos = 0;
         int endPos = fullText.length();
-        String[] textParts = fullText.split(regularExpression);
-        if (index < 0 || index > textParts.length - 1) {
-            return;
-        }
+        String[] textParts = fullText.split(" ");
+
         if (textParts.length > 1) {
             startPos = fullText.indexOf(textParts[index]);
-            endPos = fullText.indexOf(regularExpression, startPos);
+            endPos = fullText.indexOf(" ", startPos);
             if (endPos == -1) {
                 endPos = fullText.length();
             }
         }
         Spannable spannable = new SpannableString(fullText);
         ColorStateList blackColor = new ColorStateList(new int[][] { new int[] {}}, new int[] { Color.BLACK });
-        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(null, Typeface.BOLD_ITALIC, -1, blackColor, null);
-        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.RED);
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(null, Typeface.NORMAL, -1, blackColor, null);
+        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(highlightColor);
         spannable.setSpan(textAppearanceSpan, startPos, endPos, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         spannable.setSpan(backgroundColorSpan, startPos, endPos, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         textView.setText(spannable);
