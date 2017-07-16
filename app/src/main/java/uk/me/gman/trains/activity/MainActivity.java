@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -41,15 +42,14 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<DataObject> data;
     private static String LOG_TAG = "MainActivity";
     private List<Observable<Response<LocationInfo>>> observables;
-    private Timer autoUpdate;
-    private ApiInterface apiService;
 
     private String origin = "twy";
     static final Map<String, String> destinations = ImmutableMap.of(
             "did", "Didcot",
             "slo", "Slough",
             "rdg", "Reading",
-            "pad", "Paddington"
+            "pad", "Paddington",
+            "hot", "Henley"
     );
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new TrainsAdapter(data, R.layout.content_card_view, getApplicationContext());
         mRecyclerView.setAdapter(mAdapter);
 
-        apiService = ApiClient.getClient().create(ApiInterface.class);
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         observables = new ArrayList<>();
 
         for (String dest : destinations.keySet() ) {
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        autoUpdate = new Timer();
+        Timer autoUpdate = new Timer();
         autoUpdate.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void refreshData(){
-        data.clear();
+        final HashMap<String, List<TrainServices>> recdData = new HashMap<>();
 
         Observable.merge(observables)
                 .observeOn(AndroidSchedulers.mainThread())
@@ -102,6 +102,16 @@ public class MainActivity extends AppCompatActivity {
                 .subscribe(new Subscriber<Response<LocationInfo>>() {
                     @Override
                     public void onCompleted() {
+                        data.clear();
+
+                        // reorder items to what's defined in the hashmap
+                        for (Map.Entry<String, String> entry : destinations.entrySet()) {
+                            List<TrainServices> trainServices = recdData.get(entry.getKey());
+                            String dest = entry.getValue();
+                            if( trainServices != null ) {
+                                data.add(new DataObject(dest, trainServices));
+                            }
+                        }
                         mAdapter.notifyDataSetChanged();
                     }
 
@@ -116,11 +126,7 @@ public class MainActivity extends AppCompatActivity {
                         LocationInfo locationInfo = (LocationInfo) response.body();
                         if( locationInfo != null ) {
                             List<TrainServices> trainServices = locationInfo.getTrainServices();
-                            String dest = response.raw().request().url().pathSegments().get(3);
-                            for (Map.Entry<String, String> entry : destinations.entrySet()) {
-                                dest = dest.replace(entry.getKey(), entry.getValue());
-                            }
-                            data.add(new DataObject(dest, trainServices));
+                            recdData.put(response.raw().request().url().pathSegments().get(3), trainServices);
                         }
                     }
                 });
@@ -142,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         private int spacing;
         private boolean includeEdge;
 
-        public GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
+        private GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
             this.spanCount = spanCount;
             this.spacing = spacing;
             this.includeEdge = includeEdge;

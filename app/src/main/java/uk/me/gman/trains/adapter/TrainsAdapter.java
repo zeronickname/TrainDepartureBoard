@@ -13,7 +13,6 @@ import android.text.style.TextAppearanceSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -22,7 +21,6 @@ import java.util.List;
 
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.model.DataObject;
-import uk.me.gman.trains.model.LocationInfo;
 import uk.me.gman.trains.model.TrainServices;
 
 
@@ -74,6 +72,10 @@ public class TrainsAdapter
 
     @Override
     public void onBindViewHolder(TrainsViewHolder holder, final int position) {
+        if( trains.get(position).getLocInfo().getTrainServices() == null ) {
+            return;
+        }
+
         holder.title.setText(trains.get(position).getTitle(context));
         if( trains.get(position).getEtd().equals("On time") ) {
             holder.title.setBackgroundColor(0xcfd8dc);
