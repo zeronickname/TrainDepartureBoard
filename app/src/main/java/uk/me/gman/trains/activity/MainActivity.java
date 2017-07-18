@@ -11,8 +11,14 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.LineChart;
 import com.google.common.collect.ImmutableMap;
+
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +35,8 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.adapter.TrainsAdapter;
+import uk.me.gman.trains.helpers.ChartHelper;
+import uk.me.gman.trains.helpers.MqttHelper;
 import uk.me.gman.trains.model.DataObject;
 import uk.me.gman.trains.model.LocationInfo;
 import uk.me.gman.trains.model.TrainServices;
@@ -38,6 +46,10 @@ import uk.me.gman.trains.rest.ApiInterface;
 
 public class MainActivity extends AppCompatActivity {
 
+    TextView dataReceived;
+    MqttHelper mqttHelper;
+    ChartHelper mChart;
+    LineChart chart;
     private TrainsAdapter mAdapter;
     private ArrayList<DataObject> data;
     private static String LOG_TAG = "MainActivity";
@@ -55,6 +67,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_view);
+
+        chart = findViewById(R.id.chart);
+        mChart = new ChartHelper(chart);
+
+        dataReceived = findViewById(R.id.banner);
+
+        startMqtt();
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
@@ -92,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 0, 40000); // updates each 40 secs
     }
+
 
     private void refreshData(){
         final HashMap<String, List<TrainServices>> recdData = new HashMap<>();
@@ -136,6 +156,34 @@ public class MainActivity extends AppCompatActivity {
         TrainServices trains = new TrainServices("waiting", "waiting", "00:00", "On time");
         DataObject obj = new DataObject("waiting", Collections.singletonList(trains));
         return new ArrayList<>(Collections.singletonList(obj));
+    }
+
+
+    private void startMqtt(){
+        mqttHelper = new MqttHelper(this.getApplicationContext());
+        mqttHelper.setCallback(new MqttCallbackExtended() {
+            @Override
+            public void connectComplete(boolean b, String s) {
+
+            }
+
+            @Override
+            public void connectionLost(Throwable throwable) {
+
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+                Log.w("Debug",mqttMessage.toString());
+                dataReceived.setText(mqttMessage.toString());
+                mChart.addEntry(Float.valueOf(mqttMessage.toString()));
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
+            }
+        });
     }
 
 
