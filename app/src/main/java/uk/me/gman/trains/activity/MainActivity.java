@@ -14,7 +14,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
@@ -22,17 +22,13 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.adapter.TrainsAdapter;
 import uk.me.gman.trains.helpers.ChartHelper;
@@ -53,29 +49,27 @@ public class MainActivity extends AppCompatActivity {
     private TrainsAdapter mAdapter;
     private ArrayList<DataObject> data;
     private static String LOG_TAG = "MainActivity";
-    private List<Observable<Response<LocationInfo>>> observables;
 
     private String origin = "twy";
-    static final Map<String, String> destinations = ImmutableMap.of(
+    static final ImmutableMultimap<String, String> destinations = ImmutableMultimap.of(
             "did", "Didcot",
             "slo", "Slough",
             "rdg", "Reading",
             "pad", "Paddington",
             "hot", "Henley"
     );
+    private List<String> keys = new ArrayList<>(destinations.keys());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_view);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         chart = findViewById(R.id.chart);
         mChart = new ChartHelper(chart);
 
         dataReceived = findViewById(R.id.banner);
-
-        startMqtt();
-
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         RecyclerView mRecyclerView = findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
@@ -87,13 +81,7 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new TrainsAdapter(data, R.layout.content_card_view, getApplicationContext());
         mRecyclerView.setAdapter(mAdapter);
 
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        observables = new ArrayList<>();
-
-        for (String dest : destinations.keySet() ) {
-            Observable<Response<LocationInfo>> tmp = apiService.getDepartures(origin, dest);
-            observables.add(tmp);
-        }
+        startMqtt();
     }
 
     @Override
@@ -112,50 +100,47 @@ public class MainActivity extends AppCompatActivity {
         }, 0, 40000); // updates each 40 secs
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mqttHelper.disconnect();
+    }
 
     private void refreshData(){
-        final HashMap<String, List<TrainServices>> recdData = new HashMap<>();
+        for (String dest : destinations.keySet() ) {
+            ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+            Call<LocationInfo> api = apiService.getDepartures(origin, dest);
+            api.enqueue(new Callback<LocationInfo>() {
+                @Override
+                public void onResponse(Call<LocationInfo> call, Response<LocationInfo> response) {
 
-        Observable.merge(observables)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.newThread())
-                .subscribe(new Subscriber<Response<LocationInfo>>() {
-                    @Override
-                    public void onCompleted() {
-                        data.clear();
+                    LocationInfo locationInfo = response.body();
+                    if( locationInfo != null ) {
+                        String crx = response.raw().request().url().pathSegments().get(3);
+                        List<TrainServices> trainServices = locationInfo.getTrainServices();
+                        String dest = destinations.get(crx).asList().get(0);
 
-                        // reorder items to what's defined in the hashmap
-                        for (Map.Entry<String, String> entry : destinations.entrySet()) {
-                            List<TrainServices> trainServices = recdData.get(entry.getKey());
-                            String dest = entry.getValue();
-                            if( trainServices != null ) {
-                                data.add(new DataObject(dest, trainServices));
-                            }
-                        }
+                        data.set( keys.indexOf(crx), new DataObject(dest, trainServices));
                         mAdapter.notifyDataSetChanged();
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable e) {
-                        // Log error here since request failed
-                        Log.e(LOG_TAG, e.toString());
-                    }
-
-                    @Override
-                    public void onNext(/*LocationInfo locationInfo*/Response response) {
-                        LocationInfo locationInfo = (LocationInfo) response.body();
-                        if( locationInfo != null ) {
-                            List<TrainServices> trainServices = locationInfo.getTrainServices();
-                            recdData.put(response.raw().request().url().pathSegments().get(3), trainServices);
-                        }
-                    }
-                });
+                @Override
+                public void onFailure(Call<LocationInfo> call, Throwable t) {
+                    Log.d("Error",t.getMessage());
+                }
+            });
+        }
     }
 
     private ArrayList<DataObject> genDummyData() {
-        TrainServices trains = new TrainServices("waiting", "waiting", "00:00", "On time");
-        DataObject obj = new DataObject("waiting", Collections.singletonList(trains));
-        return new ArrayList<>(Collections.singletonList(obj));
+        data = new ArrayList<>();
+        for (String dest : destinations.keySet() ) {
+            TrainServices trains = new TrainServices("waiting", dest, "waiting", "On time");
+            DataObject obj = new DataObject("waiting", Collections.singletonList(trains));
+            data.add(obj);
+        }
+        return data;
     }
 
 
@@ -176,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
             public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
                 Log.w("Debug",mqttMessage.toString());
                 dataReceived.setText(mqttMessage.toString());
-                mChart.addEntry(Float.valueOf(mqttMessage.toString()));
+                mChart.addEntry(topic.split("/")[1], Float.valueOf(mqttMessage.toString()));
             }
 
             @Override

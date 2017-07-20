@@ -13,10 +13,18 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 
 public class ChartHelper implements OnChartValueSelectedListener {
 
     private LineChart mChart;
+
+    static final Map<String, Integer> colors = ImmutableMap.of(
+            "temperature", Color.RED,
+            "humidity", Color.BLUE
+    );
 
     public ChartHelper(LineChart chart) {
         mChart = chart;
@@ -70,21 +78,33 @@ public class ChartHelper implements OnChartValueSelectedListener {
 
     public void setChart(LineChart chart){ this.mChart = chart; }
 
-    public void addEntry(float value) {
+    public void addEntry(String label, float value) {
 
         LineData data = mChart.getData();
 
         if (data != null){
+            ILineDataSet set = null;
+            int dataSetIndex = 0;
 
-            ILineDataSet set = data.getDataSetByIndex(0);
-            // set.addEntry(...); // can be called as well
+            for( String key : colors.keySet()) {
+                if(key.equals(label) ) {
+                    break;
+                }
+                dataSetIndex++;
+            }
 
+            for ( ILineDataSet checkSet : data.getDataSets() ) {
+                if(checkSet.getLabel().equals(label)) {
+                    set = checkSet;
+                    break;
+                }
+            }
             if (set == null) {
-                set = createSet();
+                set = createSet( label );
                 data.addDataSet(set);
             }
 
-            data.addEntry(new Entry(set.getEntryCount(),value),0);
+            data.addEntry(new Entry(set.getEntryCount(),value), dataSetIndex);
             Log.w("chart", set.getEntryForIndex(set.getEntryCount()-1).toString());
 
             data.notifyDataChanged();
@@ -105,18 +125,13 @@ public class ChartHelper implements OnChartValueSelectedListener {
         }
     }
 
-    private LineDataSet createSet() {
-        LineDataSet set = new LineDataSet(null, "Data");
+    private LineDataSet createSet(String label) {
+        LineDataSet set = new LineDataSet(null, label);
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
-        set.setColor(Color.rgb(67, 164, 34));
-        //set.setCircleColor(Color.WHITE);
+        set.setColor(colors.get(label));
+        set.setCircleColor(colors.get(label));
         set.setLineWidth(2f);
-        //set.setCircleRadius(4f);
-        set.setFillAlpha(65);
-        set.setFillColor(Color.rgb(67, 164, 34));
-        set.setHighLightColor(Color.rgb(67, 164, 34));
-        set.setValueTextColor(Color.rgb(67, 164, 34));
-        set.setValueTextSize(9f);
+        set.setCircleRadius(4f);
         set.setDrawValues(false);
         return set;
     }
