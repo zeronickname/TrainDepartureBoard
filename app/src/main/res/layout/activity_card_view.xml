@@ -27,19 +27,27 @@
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart"
-            android:layout_width="0dp"
+            android:layout_width="120dp"
             android:layout_height="match_parent"
             android:layout_weight="0.80">
 
         </com.github.mikephil.charting.charts.LineChart>
 
         <TextView
-            android:id="@+id/banner"
-            android:layout_width="0dp"
+            android:id="@+id/temp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="0.20"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="10dp"
             android:gravity="center"
-            android:text="TextView"
+            android:textSize="50sp" />
+        <TextView
+            android:id="@+id/relH"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:gravity="center"
             android:textSize="50sp" />
 
     </LinearLayout>

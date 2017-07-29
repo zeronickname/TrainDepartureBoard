@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -42,7 +43,8 @@ import uk.me.gman.trains.rest.ApiInterface;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView dataReceived;
+    TextView dispTemp;
+    TextView dispRH;
     MqttHelper mqttHelper;
     ChartHelper mChart;
     LineChart chart;
@@ -69,11 +71,13 @@ public class MainActivity extends AppCompatActivity {
         chart = findViewById(R.id.chart);
         mChart = new ChartHelper(chart);
 
-        dataReceived = findViewById(R.id.banner);
+        dispRH = findViewById(R.id.relH);
+        dispTemp = findViewById(R.id.temp);
 
         RecyclerView mRecyclerView = findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        //mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        mRecyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,1));
         mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
 
@@ -160,8 +164,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
                 Log.w("Debug",mqttMessage.toString());
-                dataReceived.setText(mqttMessage.toString());
-                mChart.addEntry(topic.split("/")[1], Float.valueOf(mqttMessage.toString()));
+                String text = topic.split("/")[1];
+                Resources res = getApplicationContext().getResources();
+                switch( text ) {
+                    case "temp":
+                        dispTemp.setText(res.getString(R.string.temp, mqttMessage.toString()));
+                        break;
+                    case "humi":
+                        String text1 = res.getString(R.string.humi, mqttMessage.toString());
+                        dispRH.setText(text1);
+                        break;
+                }
+
+                mChart.addEntry(text, Float.valueOf(mqttMessage.toString()));
             }
 
             @Override

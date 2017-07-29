@@ -1,8 +1,10 @@
 <resources>
-    <string name="app_name">Trains</string>
-    <string name="title_activity_card_view">CardViewActivity</string>
-    <string name="to">%1$s: %2$s</string>
-    <string name="from">From  %1$s, %2$s</string>
-    <string name="descriptionOnTime">Scheduled: %1$s &#8212; %2$s</string>
-    <string name="descriptionDelayed">Scheduled: %1$s. Actual departure %2$s</string>
+<string name="app_name">Trains</string>
+<string name="title_activity_card_view">CardViewActivity</string>
+<string name="to">%1$s: %2$s</string>
+<string name="from">From  %1$s, %2$s</string>
+<string name="descriptionOnTime">Scheduled: %1$s &#8212; %2$s</string>
+<string name="descriptionDelayed">Scheduled: %1$s. Actual departure %2$s</string>
+<string name="temp">%1$s°C</string>
+<string name="humi">%1$s%%</string>
 </resources>

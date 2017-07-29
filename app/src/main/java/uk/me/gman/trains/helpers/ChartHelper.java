@@ -22,8 +22,8 @@ public class ChartHelper implements OnChartValueSelectedListener {
     private LineChart mChart;
 
     static final Map<String, Integer> colors = ImmutableMap.of(
-            "temperature", Color.RED,
-            "humidity", Color.BLUE
+            "temp", Color.RED,
+            "humi", Color.BLUE
     );
 
     public ChartHelper(LineChart chart) {
