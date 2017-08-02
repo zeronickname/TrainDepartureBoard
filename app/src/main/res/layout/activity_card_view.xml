@@ -25,14 +25,15 @@
         android:layout_weight="0.20"
         android:orientation="horizontal">
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/chart"
-            android:layout_width="120dp"
+        <TextClock
+            android:id="@+id/textClock"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="0.80">
-
-        </com.github.mikephil.charting.charts.LineChart>
-
+            android:layout_marginLeft="15dp"
+            android:format12Hour="hh:mm a"
+            android:gravity="center_vertical"
+            android:textSize="44sp"
+            android:textStyle="bold" />
         <TextView
             android:id="@+id/temp"
             android:layout_width="wrap_content"

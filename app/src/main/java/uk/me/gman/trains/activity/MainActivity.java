@@ -30,6 +30,7 @@ import java.util.TimerTask;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import uk.me.gman.trains.BuildConfig;
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.adapter.TrainsAdapter;
 import uk.me.gman.trains.helpers.ChartHelper;
@@ -46,11 +47,10 @@ public class MainActivity extends AppCompatActivity {
     TextView dispTemp;
     TextView dispRH;
     MqttHelper mqttHelper;
-    ChartHelper mChart;
-    LineChart chart;
     private TrainsAdapter mAdapter;
     private ArrayList<DataObject> data;
     private static String LOG_TAG = "MainActivity";
+    private static String DarkSkyReq = "https://api.darksky.net/forecast/"+BuildConfig.API_ID+"/"+BuildConfig.LOCATION+"?exclude=alerts,flags,minutely,hourly";
 
     private String origin = "twy";
     static final ImmutableMultimap<String, String> destinations = ImmutableMultimap.of(
@@ -67,9 +67,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_view);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-
-        chart = findViewById(R.id.chart);
-        mChart = new ChartHelper(chart);
 
         dispRH = findViewById(R.id.relH);
         dispTemp = findViewById(R.id.temp);
@@ -175,8 +172,6 @@ public class MainActivity extends AppCompatActivity {
                         dispRH.setText(text1);
                         break;
                 }
-
-                mChart.addEntry(text, Float.valueOf(mqttMessage.toString()));
             }
 
             @Override
