@@ -56,4 +56,6 @@ dependencies {
     compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0'
     compile 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
     compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
+
+    compile 'com.github.pwittchen:weathericonview:1.1.0'
 }

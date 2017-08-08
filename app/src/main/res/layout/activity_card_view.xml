@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:background="#000000"
     android:orientation="vertical"
     tools:context=".activity.MainActivity">
@@ -34,23 +35,40 @@
             android:gravity="center_vertical"
             android:textSize="44sp"
             android:textStyle="bold" />
-        <TextView
-            android:id="@+id/temp"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginRight="10dp"
-            android:layout_marginLeft="10dp"
+        <com.github.pwittchen.weathericonview.WeatherIconView
+            android:id="@+id/weatherIcon"
             android:gravity="center"
-            android:textSize="50sp" />
-        <TextView
-            android:id="@+id/relH"
+            custom:weatherIconColor="@android:color/white"
+            custom:weatherIconSize="50"
+            android:layout_marginRight="25dp"
+            android:layout_marginLeft="25dp"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:gravity="center"
-            android:textSize="50sp" />
-
+            android:layout_height="match_parent" />
+        <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/RelativeLayout01"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="10dp">
+            <TextView
+                android:id="@+id/temp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:gravity="center"
+                android:layout_toLeftOf="@id/relH"
+                android:textSize="50sp" />
+            <TextView
+                android:id="@+id/relH"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:textSize="50sp" />
+        </RelativeLayout>
     </LinearLayout>
 
 </LinearLayout>

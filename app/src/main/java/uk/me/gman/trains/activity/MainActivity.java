@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
@@ -14,7 +13,8 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 
-import com.github.mikephil.charting.charts.LineChart;
+import com.github.pwittchen.weathericonview.WeatherIconView;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -33,13 +33,15 @@ import retrofit2.Response;
 import uk.me.gman.trains.BuildConfig;
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.adapter.TrainsAdapter;
-import uk.me.gman.trains.helpers.ChartHelper;
 import uk.me.gman.trains.helpers.MqttHelper;
+import uk.me.gman.trains.model.DarkSky;
 import uk.me.gman.trains.model.DataObject;
 import uk.me.gman.trains.model.LocationInfo;
 import uk.me.gman.trains.model.TrainServices;
 import uk.me.gman.trains.rest.ApiClient;
 import uk.me.gman.trains.rest.ApiInterface;
+import uk.me.gman.trains.rest.ForecastClient;
+import uk.me.gman.trains.rest.ForecastInterface;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -50,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private TrainsAdapter mAdapter;
     private ArrayList<DataObject> data;
     private static String LOG_TAG = "MainActivity";
-    private static String DarkSkyReq = "https://api.darksky.net/forecast/"+BuildConfig.API_ID+"/"+BuildConfig.LOCATION+"?exclude=alerts,flags,minutely,hourly";
+    private WeatherIconView weatherIcon;
 
     private String origin = "twy";
     static final ImmutableMultimap<String, String> destinations = ImmutableMultimap.of(
@@ -62,12 +64,30 @@ public class MainActivity extends AppCompatActivity {
     );
     private List<String> keys = new ArrayList<>(destinations.keys());
 
+    final ImmutableMap<String, Integer> icon_lookup = ImmutableMap.<String, Integer>builder()
+            .put("clear-day", R.string.wi_day_sunny)
+            .put("clear-night", R.string.wi_night_clear)
+            .put("rain", R.string.wi_rain)
+            .put("snow", R.string.wi_snow)
+            .put("sleet", R.string.wi_sleet)
+            .put("wind", R.string.wi_strong_wind)
+            .put("fog", R.string.wi_fog)
+            .put("cloudy", R.string.wi_cloudy)
+            .put("partly-cloudy-day", R.string.wi_day_cloudy)
+            .put("partly-cloudy-night", R.string.wi_night_alt_cloudy)
+            .put("hail", R.string.wi_hail)
+            .put("thunderstorm", R.string.wi_thunderstorm)
+            .put("tornado", R.string.wi_tornado)
+            .build();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_view);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
+
+        weatherIcon = findViewById(R.id.weatherIcon);
         dispRH = findViewById(R.id.relH);
         dispTemp = findViewById(R.id.temp);
 
@@ -99,6 +119,17 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }, 0, 40000); // updates each 40 secs
+        Timer updateWeather = new Timer();
+        updateWeather.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        refreshWeather();
+                    }
+                });
+            }
+        }, 0, 300000); // updates every 5 mins
     }
 
     @Override
@@ -107,6 +138,25 @@ public class MainActivity extends AppCompatActivity {
         mqttHelper.disconnect();
     }
 
+    private void refreshWeather() {
+        ForecastInterface apiService = ForecastClient.getClient().create(ForecastInterface.class);
+        Call<DarkSky> api = apiService.getForecast(BuildConfig.API_ID, BuildConfig.LOCATION);
+        api.enqueue(new Callback<DarkSky>() {
+            @Override
+            public void onResponse(Call<DarkSky> call, Response<DarkSky> response) {
+                DarkSky forecast = response.body();
+                if( forecast != null ) {
+                    weatherIcon.setIconResource(getString(icon_lookup.get(forecast.getIcon())));
+                    Log.w("forecast", forecast.getIcon());
+                }
+            }
+            @Override
+            public void onFailure(Call<DarkSky> call, Throwable t) {
+                Log.d("Error",t.getMessage());
+            }
+        });
+
+    }
     private void refreshData(){
         for (String dest : destinations.keySet() ) {
             ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
