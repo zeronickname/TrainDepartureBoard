@@ -33,7 +33,7 @@
             android:layout_marginLeft="15dp"
             android:format12Hour="hh:mm a"
             android:gravity="center_vertical"
-            android:textSize="44sp"
+            android:textSize="35sp"
             android:textStyle="bold" />
         <com.github.pwittchen.weathericonview.WeatherIconView
             android:id="@+id/weatherIcon"
@@ -58,7 +58,7 @@
                 android:layout_marginLeft="10dp"
                 android:gravity="center"
                 android:layout_toLeftOf="@id/relH"
-                android:textSize="50sp" />
+                android:textSize="35sp" />
             <TextView
                 android:id="@+id/relH"
                 android:layout_width="wrap_content"
@@ -67,7 +67,7 @@
                 android:layout_marginRight="10dp"
                 android:layout_alignParentRight="true"
                 android:gravity="center"
-                android:textSize="50sp" />
+                android:textSize="35sp" />
         </RelativeLayout>
     </LinearLayout>
 
