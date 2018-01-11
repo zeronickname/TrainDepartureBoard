@@ -20,22 +20,22 @@ public class DataObject {
     public LocationInfo getLocInfo() { return trains; }
     public String getDestination() {return destination; }
 
-    public String getEtd(){ return trains.getTrainServices().get(0).getEtd(); }
+    public String getEtd( int position ){ return trains.getTrainServices().get(position).getEtd(); }
 
-    public String getTitle( Context context ) {
+    public String getTitle( Context context, int position ) {
         Resources res = context.getResources();
-        String departureTime = trains.getTrainServices().get(0).getEtd();
+        String departureTime = trains.getTrainServices().get(position).getEtd();
         if( departureTime.equals("On time") ) {
-            departureTime = trains.getTrainServices().get(0).getStd();
+            departureTime = trains.getTrainServices().get(position).getStd();
         }
         return res.getString(R.string.to, destination, departureTime);
     }
-    public String getDescription( Context context ) {
+    public String getDescription( Context context, int position ) {
         Resources res = context.getResources();
         int id = R.string.descriptionDelayed;
-        if( trains.getTrainServices().get(0).getEtd().equals("On time")) {
+        if( trains.getTrainServices().get(position).getEtd().equals("On time")) {
             id = R.string.descriptionOnTime;
         }
-        return res.getString(id, trains.getTrainServices().get(0).getStd(), trains.getTrainServices().get(0).getEtd());
+        return res.getString(id, trains.getTrainServices().get(position).getStd(), trains.getTrainServices().get(0).getEtd());
     }
 }

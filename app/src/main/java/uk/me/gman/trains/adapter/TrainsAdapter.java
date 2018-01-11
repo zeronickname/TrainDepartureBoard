@@ -17,10 +17,12 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import java.time.LocalTime;
 import java.util.List;
 
 import uk.me.gman.trains.R;
 import uk.me.gman.trains.model.DataObject;
+import uk.me.gman.trains.model.LocationInfo;
 import uk.me.gman.trains.model.TrainServices;
 
 
@@ -76,16 +78,18 @@ public class TrainsAdapter
             return;
         }
 
-        holder.title.setText(trains.get(position).getTitle(context));
-        if( trains.get(position).getEtd().equals("On time") ) {
+        int nextTrainIndex = getNextDeparturePosition(trains.get(position).getLocInfo());
+
+        holder.title.setText(trains.get(position).getTitle(context,nextTrainIndex));
+        if( trains.get(position).getEtd(nextTrainIndex).equals("On time") ) {
             holder.title.setBackgroundColor(0xcfd8dc);
-        } else if( trains.get(position).getEtd().equals("Cancelled") ) {
+        } else if( trains.get(position).getEtd(nextTrainIndex).equals("Cancelled") ) {
             highlightTextPart(holder.title, Color.RED);
         } else {
             highlightTextPart(holder.title, Color.YELLOW);
         }
 
-        holder.description.setText(trains.get(position).getDescription(context));
+        holder.description.setText(trains.get(position).getDescription(context,nextTrainIndex));
 
         if (position == expandedPosition) {
             holder.llExpandArea.setVisibility(View.VISIBLE);
@@ -199,4 +203,40 @@ public class TrainsAdapter
         spannable.setSpan(backgroundColorSpan, startPos, endPos, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         textView.setText(spannable);
     }
+
+    private int getNextDeparturePosition( LocationInfo trains ) {
+        if( trains.getTrainServices().get(0).getStd().equals("waiting")) {
+            // on boo... nothing populated.....
+            return 0;
+        }
+
+        int position = 0;
+        LocalTime now = LocalTime.now().plusMinutes(3); // we can't get to the train station in the next few minutes anyway....
+        LocalTime bestEtd = etdLocalTime(trains.getTrainServices().get(0));
+        int count = 0;
+        for(TrainServices train : trains.getTrainServices() ) {
+            LocalTime depTime = etdLocalTime(train);
+            if( depTime.isAfter(now) ) {
+                if( bestEtd.isBefore(now) || depTime.isBefore(bestEtd)) {
+                    position = count;
+                    bestEtd = depTime;
+                }
+            }
+
+            count++;
+        }
+
+        return position;
+    }
+
+    private LocalTime etdLocalTime( TrainServices train ) {
+        if( train.getEtd().equals("On time")) {
+            return LocalTime.parse( train.getStd() );
+        } else if( train.getEtd().equals("Cancelled")) {
+            return LocalTime.now().minusMinutes(1); // Cancelled? return a time in the past!
+        } else {
+            return LocalTime.parse( train.getEtd() );
+        }
+    }
+
 }
