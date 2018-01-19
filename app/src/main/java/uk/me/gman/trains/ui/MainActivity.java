@@ -1,21 +1,17 @@
-package uk.me.gman.trains.activity;
+package uk.me.gman.trains.ui;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.res.Resources;
+import android.databinding.DataBindingUtil;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.View;
-import android.widget.TextView;
 
-import com.github.pwittchen.weathericonview.WeatherIconView;
-import com.google.android.things.device.ScreenManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 
@@ -26,35 +22,30 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import uk.me.gman.trains.BuildConfig;
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
+import timber.log.Timber;
 import uk.me.gman.trains.R;
-import uk.me.gman.trains.adapter.TrainsAdapter;
+import uk.me.gman.trains.data.database.TrainEntry;
+import uk.me.gman.trains.databinding.ActivityCardViewBinding;
 import uk.me.gman.trains.helpers.MqttHelper;
-import uk.me.gman.trains.model.DarkSky;
 import uk.me.gman.trains.model.DataObject;
-import uk.me.gman.trains.model.LocationInfo;
 import uk.me.gman.trains.model.TrainServices;
-import uk.me.gman.trains.rest.ApiClient;
-import uk.me.gman.trains.rest.ApiInterface;
-import uk.me.gman.trains.rest.ForecastClient;
-import uk.me.gman.trains.rest.ForecastInterface;
 
+public class MainActivity extends DaggerAppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
-public class MainActivity extends AppCompatActivity {
+    private ActivityCardViewBinding binding;
 
-    TextView dispTemp;
-    TextView dispRH;
+    @Inject
+    MainViewModelFactory viewModelFactory;
+
+    MainViewModel viewModel;
+
     MqttHelper mqttHelper;
     private TrainsAdapter mAdapter;
     private ArrayList<DataObject> data;
-    private static String LOG_TAG = "MainActivity";
-    private WeatherIconView weatherIcon;
 
     private String origin = "twy";
     static final ImmutableMultimap<String, String> destinations = ImmutableMultimap.of(
@@ -85,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_card_view);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_card_view);
+        viewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel.class);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         /*
@@ -95,101 +87,54 @@ public class MainActivity extends AppCompatActivity {
         screenManager.setBrightness(255); //Max it out.
         */
 
-        weatherIcon = findViewById(R.id.weatherIcon);
-        dispRH = findViewById(R.id.relH);
-        dispTemp = findViewById(R.id.temp);
-
-        RecyclerView mRecyclerView = findViewById(R.id.my_recycler_view);
-        mRecyclerView.setHasFixedSize(true);
-        //mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        mRecyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,1));
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        binding.trainTimes.setHasFixedSize(true);
+        //binding.trainTimes.setLayoutManager(new GridLayoutManager(this, 2));
+        binding.trainTimes.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
 
         data = genDummyData();
         mAdapter = new TrainsAdapter(data, R.layout.content_card_view, getApplicationContext());
-        mRecyclerView.setAdapter(mAdapter);
+        binding.trainTimes.setAdapter(mAdapter);
+
+        binding.swipeRefresh.setOnRefreshListener(this);
 
         startMqtt();
+
+        viewModel.getTrains().observe(this, trains -> {
+            if (trains != null) {
+                Timber.d("New train data " + trains.toString());
+                for (TrainEntry t : trains) {
+                    /*
+                    String crx = response.raw().request().url().pathSegments().get(3);
+                    List<TrainServices> trainServices = locationInfo.getTrainServices();
+                    String dest = destinations.get(crx).asList().get(0);
+
+                    data.set( keys.indexOf(crx), new DataObject(dest, trainServices));
+                    mAdapter.notifyDataSetChanged();
+                     */
+                }
+            }
+        });
+
+        viewModel.getTrainsLoading().observe(this, loading -> {
+            if (loading != null)
+                binding.swipeRefresh.setRefreshing(loading);
+        });
+
+        viewModel.getWeather().observe(this, weather -> {
+            if (weather != null)
+                binding.weatherIcon.setIconResource(getString(icon_lookup.get(weather.getIcon())));
+        });
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        Timer autoUpdate = new Timer();
-        autoUpdate.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        refreshData();
-                    }
-                });
-            }
-        }, 0, 40000); // updates each 40 secs
-        Timer updateWeather = new Timer();
-        updateWeather.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        refreshWeather();
-                    }
-                });
-            }
-        }, 0, 300000); // updates every 5 mins
+    public void onRefresh() {
+        viewModel.refreshTrains();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         mqttHelper.disconnect();
-    }
-
-    private void refreshWeather() {
-        ForecastInterface apiService = ForecastClient.getClient().create(ForecastInterface.class);
-        Call<DarkSky> api = apiService.getForecast(BuildConfig.API_ID, BuildConfig.LOCATION);
-        api.enqueue(new Callback<DarkSky>() {
-            @Override
-            public void onResponse(Call<DarkSky> call, Response<DarkSky> response) {
-                DarkSky forecast = response.body();
-                if( forecast != null ) {
-                    weatherIcon.setIconResource(getString(icon_lookup.get(forecast.getIcon())));
-                    Log.w("forecast", forecast.getIcon());
-                }
-            }
-            @Override
-            public void onFailure(Call<DarkSky> call, Throwable t) {
-                Log.d("Error",t.getMessage());
-            }
-        });
-
-    }
-    private void refreshData(){
-        for (String dest : destinations.keySet() ) {
-            ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-            Call<LocationInfo> api = apiService.getDepartures(origin, dest);
-            api.enqueue(new Callback<LocationInfo>() {
-                @Override
-                public void onResponse(Call<LocationInfo> call, Response<LocationInfo> response) {
-
-                    LocationInfo locationInfo = response.body();
-                    if( locationInfo != null ) {
-                        String crx = response.raw().request().url().pathSegments().get(3);
-                        List<TrainServices> trainServices = locationInfo.getTrainServices();
-                        String dest = destinations.get(crx).asList().get(0);
-
-                        data.set( keys.indexOf(crx), new DataObject(dest, trainServices));
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<LocationInfo> call, Throwable t) {
-                    Log.d("Error",t.getMessage());
-                }
-            });
-        }
     }
 
     private ArrayList<DataObject> genDummyData() {
@@ -217,17 +162,16 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
+            public void messageArrived(String topic, MqttMessage mqttMessage) {
                 Log.w("Debug",mqttMessage.toString());
                 String text = topic.split("/")[1];
                 Resources res = getApplicationContext().getResources();
                 switch( text ) {
                     case "temp":
-                        dispTemp.setText(res.getString(R.string.temp, mqttMessage.toString()));
+                        binding.temp.setText(res.getString(R.string.temp, mqttMessage.toString()));
                         break;
                     case "humi":
-                        String text1 = res.getString(R.string.humi, mqttMessage.toString());
-                        dispRH.setText(text1);
+                        binding.relH.setText(res.getString(R.string.humi, mqttMessage.toString()));
                         break;
                 }
             }

@@ -1,74 +1,86 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:background="#000000"
-    android:orientation="vertical"
-    tools:context=".activity.MainActivity">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.80"
-        android:id="@+id/trainTimes">
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/my_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="vertical" />
-    </RelativeLayout>
     <LinearLayout
-        android:id="@+id/graph"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.20"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:orientation="vertical"
+        tools:context=".ui.MainActivity">
 
-        <TextClock
-            android:id="@+id/textClock"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="15dp"
-            android:format12Hour="hh:mm a"
-            android:gravity="center_vertical"
-            android:textSize="35sp"
-            android:textStyle="bold" />
-        <com.github.pwittchen.weathericonview.WeatherIconView
-            android:id="@+id/weatherIcon"
-            android:gravity="center"
-            custom:weatherIconColor="@android:color/white"
-            custom:weatherIconSize="50"
-            android:layout_marginRight="25dp"
-            android:layout_marginLeft="25dp"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent" />
-        <RelativeLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/RelativeLayout01"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:padding="10dp">
-            <TextView
-                android:id="@+id/temp"
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.80">
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/trainTimes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical"
+                android:orientation="vertical"
+                app:layoutManager="android.support.v7.widget.StaggeredGridLayoutManager"
+                app:spanCount="2"
+                tools:listitem="@layout/content_card_view"/>
+        </android.support.v4.widget.SwipeRefreshLayout>
+        <LinearLayout
+            android:id="@+id/graph"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.20"
+            android:orientation="horizontal">
+
+            <TextClock
+                android:id="@+id/textClock"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_marginRight="10dp"
-                android:layout_marginLeft="10dp"
+                android:layout_marginLeft="15dp"
+                android:format12Hour="hh:mm a"
+                android:gravity="center_vertical"
+                android:textSize="35sp"
+                android:textStyle="bold"
+                tools:text="12:34 PM"/>
+            <com.github.pwittchen.weathericonview.WeatherIconView
+                android:id="@+id/weatherIcon"
                 android:gravity="center"
-                android:layout_toLeftOf="@id/relH"
-                android:textSize="35sp" />
-            <TextView
-                android:id="@+id/relH"
+                custom:weatherIconColor="@android:color/white"
+                custom:weatherIconSize="50"
+                android:layout_marginRight="25dp"
+                android:layout_marginLeft="25dp"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_alignParentRight="true"
-                android:gravity="center"
-                android:textSize="35sp" />
-        </RelativeLayout>
+                android:layout_height="match_parent"/>
+            <RelativeLayout
+                android:id="@+id/RelativeLayout01"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:padding="10dp">
+                <TextView
+                    android:id="@+id/temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:gravity="center"
+                    android:layout_toLeftOf="@id/relH"
+                    android:textSize="35sp"
+                    tools:text="12°C"/>
+                <TextView
+                    android:id="@+id/relH"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_alignParentRight="true"
+                    android:gravity="center"
+                    android:textSize="35sp"
+                    tools:text="34%"/>
+            </RelativeLayout>
+        </LinearLayout>
+
     </LinearLayout>
-
-</LinearLayout>
+</layout>

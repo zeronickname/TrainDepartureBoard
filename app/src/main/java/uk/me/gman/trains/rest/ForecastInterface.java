@@ -8,7 +8,7 @@ import uk.me.gman.trains.model.DarkSky;
 
 public interface ForecastInterface {
 
-    @GET("forecast/{api}/{location}")
+    @GET("forecast/{api}/{location}?exclude=[minutely,hourly,flags]")
     Call<DarkSky> getForecast(@Path("api") String api, @Path("location") String location );
 
 }

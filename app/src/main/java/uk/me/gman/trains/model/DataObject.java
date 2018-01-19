@@ -13,7 +13,9 @@ public class DataObject {
     private String destination;
 
     public DataObject( String destination, List<TrainServices> trains ) {
-        this.trains = new LocationInfo(trains);
+        LocationInfo info = new LocationInfo();
+        info.setTrainServices(trains);
+        this.trains = info;
         this.destination = destination;
     }
 

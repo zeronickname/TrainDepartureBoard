@@ -1,4 +1,4 @@
-package uk.me.gman.trains.adapter;
+package uk.me.gman.trains.ui;
 
 
 import android.content.Context;
