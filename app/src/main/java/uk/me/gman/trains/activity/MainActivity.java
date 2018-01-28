@@ -88,12 +88,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_card_view);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
-        /*
         ScreenManager screenManager = new ScreenManager(Display.DEFAULT_DISPLAY);
         // Set brightness to a fixed value
         screenManager.setBrightnessMode(ScreenManager.BRIGHTNESS_MODE_MANUAL);
-        screenManager.setBrightness(255); //Max it out.
-        */
+        screenManager.setBrightness(100);
 
         weatherIcon = findViewById(R.id.weatherIcon);
         dispRH = findViewById(R.id.relH);

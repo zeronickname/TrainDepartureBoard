@@ -211,7 +211,7 @@ public class TrainsAdapter
         }
 
         int position = 0;
-        LocalTime now = LocalTime.now().plusMinutes(3); // we can't get to the train station in the next few minutes anyway....
+        LocalTime now = LocalTime.now().plusSeconds(210); // we can't get to the train station in the next few minutes anyway....
         LocalTime bestEtd = etdLocalTime(trains.getTrainServices().get(0));
         int count = 0;
         for(TrainServices train : trains.getTrainServices() ) {
@@ -234,7 +234,13 @@ public class TrainsAdapter
             return LocalTime.parse( train.getStd() );
         } else if( train.getEtd().equals("Cancelled")) {
             return LocalTime.now().minusMinutes(1); // Cancelled? return a time in the past!
-        } else {
+        } else if( train.getEtd().equals("Delayed")) {
+            if( LocalTime.parse(train.getStd()).isBefore(LocalTime.now()) ) {
+                return LocalTime.now().plusMinutes(10);
+            } else {
+                return LocalTime.parse( train.getStd() ).plusMinutes(10);
+            }
+        }else {
             return LocalTime.parse( train.getEtd() );
         }
     }
